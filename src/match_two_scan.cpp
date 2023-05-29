@@ -18,7 +18,7 @@
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
 #include <pcl/filters/voxel_grid.h>
-#include <python2.7/Python.h>
+#include <python3.8/Python.h>
 
 
 using namespace std;
@@ -69,13 +69,13 @@ std::vector<std::string> pyListSortDir(std::string path)
     Py_Initialize();
 
     //PyRun_SimpleString("import os");
-    PyObject* module_name = PyString_FromString("os");
+    PyObject* module_name = PyUnicode_FromString("os");
     PyObject* os_module = PyImport_Import(module_name);
     PyObject* os_list = PyObject_GetAttrString(os_module, "listdir");
     //PyObject* os_list = PyObject_GetAttrString(os_module, "");
 
     PyObject *ArgList = PyTuple_New(1);
-    PyObject* py_path = PyString_FromString(path.c_str());
+    PyObject* py_path = PyUnicode_FromString(path.c_str());
     PyTuple_SetItem(ArgList, 0, py_path);
 
     PyObject* files = PyObject_CallObject(os_list, ArgList);
@@ -161,6 +161,7 @@ int imagePadding(Mat& img, int &cor_x, int & cor_y)
 	int m = getOptimalDFTSize(img.rows);
 	int n = getOptimalDFTSize(img.cols);
 
+
     int row_pad = (m - img.rows)/2;
     int col_pad = (n - img.cols)/2;
     //take this step to make fft faster
@@ -168,6 +169,7 @@ int imagePadding(Mat& img, int &cor_x, int & cor_y)
                 col_pad, (n - img.cols)%2?col_pad+1:col_pad , BORDER_CONSTANT, Scalar(10));
     cor_x += col_pad+pad_size/2;
     cor_y += row_pad+pad_size/2;
+
 }
 
 
@@ -240,8 +242,8 @@ void match2Image(Mat img1, Mat img2, int max_x1, int max_y1, int max_x2 , int ma
       for(int j=0; j<img2.cols; j++)
         if(img2.ptr<uint8_t>(i)[j]<=10) img2.ptr<uint8_t>(i)[j]=10;
 
-    normalize(img1, img1, 0, 255, CV_MINMAX);
-    normalize(img2, img2, 0, 255, CV_MINMAX);
+    normalize(img1, img1, 0, 255, NORM_MINMAX);
+    normalize(img2, img2, 0, 255, NORM_MINMAX);
 
     drawKeypoints(img1, bvfts1.keypoints,img1,Scalar(0,0,255),DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
     drawKeypoints(img2, bvfts2.keypoints,img2,Scalar(0,0,255),DrawMatchesFlags::DRAW_RICH_KEYPOINTS);
@@ -277,7 +279,7 @@ int main(int argc, char** argv)
         pcl::PointXYZ tmp = point_cloud1[i];
         point_cloud1[i].x = cos(rotation_angle)*tmp.x + sin(rotation_angle)*tmp.y;
         point_cloud1[i].y = -sin(rotation_angle)*tmp.x + cos(rotation_angle)*tmp.y;
-    }
+    }writeMatToBin
 
     Mat img1, img2;
     int max_x1,max_y2,max_x2,max_y1;  //used for localizing the center of the images
@@ -289,6 +291,8 @@ int main(int argc, char** argv)
     //padding to make fft faster
     imagePadding(img1, max_x1, max_y1);
     imagePadding(img2, max_x2, max_y2);
+
+    std::cout << "Finished Padding " << std::endl;
 
     //perform matching
     match2Image(img1, img2, max_x1,max_y1,max_x2,max_y2);  

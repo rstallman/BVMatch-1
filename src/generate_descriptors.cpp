@@ -14,7 +14,7 @@
 #include <pcl/point_types.h>
 #include <pcl/filters/voxel_grid.h>
 
-#include <python2.7/Python.h>
+#include <python3.8/Python.h>
 
 using namespace cv;
 using namespace std;
@@ -61,13 +61,13 @@ std::vector<std::string> pyListSortDir(std::string path)
     Py_Initialize();
 
     //PyRun_SimpleString("import os");
-    PyObject* module_name = PyString_FromString("os");
+    PyObject* module_name = PyUnicode_FromString("os");
     PyObject* os_module = PyImport_Import(module_name);
     PyObject* os_list = PyObject_GetAttrString(os_module, "listdir");
     //PyObject* os_list = PyObject_GetAttrString(os_module, "");
 
     PyObject *ArgList = PyTuple_New(1);
-    PyObject* py_path = PyString_FromString(path.c_str());
+    PyObject* py_path = PyUnicode_FromString(path.c_str());
     PyTuple_SetItem(ArgList, 0, py_path);
 
     PyObject* files = PyObject_CallObject(os_list, ArgList);
@@ -185,7 +185,6 @@ int main(int argc, char** argv)
         imagePadding(mat_local_image, max_local_x_ind, max_local_y_ind);
 
         BVFT bvft = detectBVFT(mat_local_image);
-
         //save descriptor to mat
         writeMatToBin(bvft.descriptors,(seq+"des_"+to_string(10000+i)+"_"+to_string(max_local_x_ind)+","+to_string(max_local_y_ind)+".bin").c_str());
     }

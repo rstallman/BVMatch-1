@@ -110,7 +110,7 @@ Mat get_trans_icp(const Mat& src_, const Mat& dst_)
 
     D = Mat::diag(D_t);
 
-    Mat h = V*(1.0/D)*U.t()*xp;
+    Mat h = V*D.inv()*U.t()*xp;
 
     Mat H = (Mat_<float>(3,3) << h.ptr<float>(0)[0], -h.ptr<float>(1)[0], h.ptr<float>(2)[0],
                                 h.ptr<float>(1)[0], h.ptr<float>(0)[0], h.ptr<float>(3)[0],
@@ -131,7 +131,7 @@ Mat get_trans_icp(const Mat& src_, const Mat& dst_)
 
 }
 
-//lesat square ICP using SVD
+//least square ICP using SVD
 Mat get_trans_icp_3_points(const Mat& src_, const Mat& dst_)
 {
     chrono::steady_clock::time_point t1=chrono::steady_clock::now();
@@ -232,11 +232,11 @@ Mat get_trans_icp_3_points(const Mat& src_, const Mat& dst_)
     Mat U(samples*2, samples*2, CV_32F, Scalar{0});
     Mat D(samples*2, 4, CV_32F, Scalar{0});
     Mat V(4, 4, CV_32F, Scalar{0});
-    
+
     SVDecomp(A, D_t,U,V);
-    
+
     D = Mat::diag(D_t);
-    Mat h = V*(1.0/D)*U.t()*xp;
+    Mat h = V*D.inv()*U.t()*xp;
     Mat H = (Mat_<float>(3,3) << h.ptr<float>(0)[0], -h.ptr<float>(1)[0], h.ptr<float>(2)[0],
                                 h.ptr<float>(1)[0], h.ptr<float>(0)[0], h.ptr<float>(3)[0],
                                 0,0,1);
@@ -326,7 +326,7 @@ Mat estimateICP(const Mat& src, const Mat& dst, vector<int>& inliers_ind, int ma
             Mat err_temp=T*src_homo_t-dst_homo_t;
             err_temp=err_temp.mul(err_temp);
             
-            reduce(err_temp, err, 0, CV_REDUCE_SUM); //one row
+            reduce(err_temp, err, 0, cv::REDUCE_SUM); //one row
 
             int consensus_num =  sum((err<err_t*err_t)/255)[0];
             if (consensus_num > max_consensus_number)
@@ -342,7 +342,7 @@ Mat estimateICP(const Mat& src, const Mat& dst, vector<int>& inliers_ind, int ma
     }
 
     Mat err;
-    reduce((consensus_T*src_homo.t()-dst_homo.t()).mul(consensus_T*src_homo.t()-dst_homo.t()), err, 0, CV_REDUCE_SUM);
+    reduce((consensus_T*src_homo.t()-dst_homo.t()).mul(consensus_T*src_homo.t()-dst_homo.t()), err, 0, cv::REDUCE_SUM);
     for(int i=0; i<err.cols; i++)
     {
         if(err.ptr<float>(0)[i]<err_t*err_t)
@@ -367,40 +367,40 @@ Mat estimateICP(const Mat& src, const Mat& dst, vector<int>& inliers_ind, int ma
 }
 
 
-void writeMatToFile(cv::Mat& m, const char* filename)
-{
-	std::ofstream fout(filename);
-    int mat_type = m.type();
-	if (!fout||mat_type>=8)
-	{
-		std::cout << "File Not Opened or multi-channel mat" << std::endl;  
-		return;
-	}
+// void writeMatToFile(cv::Mat& m, const char* filename)
+// {
+// 	std::ofstream fout(filename);
+//     int mat_type = m.type();
+// 	if (!fout||mat_type>=8)
+// 	{
+// 		std::cout << "File Not Opened or multi-channel mat" << std::endl;  
+// 		return;
+// 	}
     
-	for (int i = 0; i<m.rows; i++)
-	{
-		for (int j = 0; j<m.cols; j++)
-		{
-            if(mat_type%8==0)
-    			fout << int(m.at<uint8_t>(i, j)) << "\t";
-            else if(mat_type%8==1)
-    			fout << m.at<int8_t>(i, j) << "\t";
-            if(mat_type%8==2)
-    			fout << m.at<uint16_t>(i, j) << "\t";
-            if(mat_type%8==3)
-    			fout << m.at<int16_t>(i, j) << "\t";
-            if(mat_type%8==4)
-    			fout << m.at<int>(i, j) << "\t";
-            if(mat_type%8==5)
-    			fout << m.at<float>(i, j) << "\t";
-            if(mat_type%8==6)
-    			fout << m.at<double>(i, j) << "\t";
-		}
-		fout << std::endl;
-	}
+// 	for (int i = 0; i<m.rows; i++)
+// 	{
+// 		for (int j = 0; j<m.cols; j++)
+// 		{
+//             if(mat_type%8==0)
+//     			fout << int(m.at<uint8_t>(i, j)) << "\t";
+//             else if(mat_type%8==1)
+//     			fout << m.at<int8_t>(i, j) << "\t";
+//             if(mat_type%8==2)
+//     			fout << m.at<uint16_t>(i, j) << "\t";
+//             if(mat_type%8==3)
+//     			fout << m.at<int16_t>(i, j) << "\t";
+//             if(mat_type%8==4)
+//     			fout << m.at<int>(i, j) << "\t";
+//             if(mat_type%8==5)
+//     			fout << m.at<float>(i, j) << "\t";
+//             if(mat_type%8==6)
+//     			fout << m.at<double>(i, j) << "\t";
+// 		}
+// 		fout << std::endl;
+// 	}
  
-	fout.close();
-}
+// 	fout.close();
+// }
 
 int writeMatToBin(const cv::Mat& m, const std::string filename)
 {
@@ -575,7 +575,7 @@ BVFT detectBVFT(Mat img1)
 {
     chrono::steady_clock::time_point t_start = chrono::steady_clock::now();
 
-    normalize(img1,img1,0,255,CV_MINMAX);
+    normalize(img1,img1,0,255,NORM_MINMAX);
 
     int rows = img1.rows;
     int cols = img1.cols;
@@ -679,7 +679,7 @@ BVFT detectBVFT(Mat img1)
     //detect FAST keypoints on the BV image
     Ptr<FastFeatureDetector> fast = FastFeatureDetector::create();
     Mat for_fast=img1.clone();
-    normalize(img1,for_fast, 0, 255, CV_MINMAX);//=img1.clone();
+    normalize(img1,for_fast, 0, 255, NORM_MINMAX);//=img1.clone();
 
     vector<KeyPoint> keypoints_raw;
     vector<KeyPoint> keypoints;
